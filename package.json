@@ -1,0 +1,23 @@
+{
+  "name": "moshav-bot",
+  "version": "1.0.0",
+  "description": "Apartment-hunting bot for moshavim/kibbutzim (Yad2 + Facebook) with Telegram alerts",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "scrape": "node src/runOnce.js",
+    "dry-run": "DRY_RUN=true node src/runOnce.js",
+    "fb:auth": "node scripts/fbAuth.js",
+    "telegram:chatid": "node scripts/telegramChatId.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "node-cron": "^3.0.3",
+    "playwright": "^1.46.0"
+  }
+}

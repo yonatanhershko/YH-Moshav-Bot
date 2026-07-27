@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: moshav-bot
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install && npx playwright install --with-deps chromium
+    startCommand: npm start
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: FB_ENABLED
+        value: "true"
+      - key: FB_STORAGE_STATE_B64
+        sync: false
+      - key: CHECK_CRON
+        value: "*/30 * * * *"
+      - key: RUN_ON_BOOT
+        value: "true"
+      - key: PORT
+        value: "3000"
