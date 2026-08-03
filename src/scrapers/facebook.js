@@ -65,6 +65,9 @@ export async function scrapeFacebook() {
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--no-zygote",
         "--disable-blink-features=AutomationControlled",
       ],
     });

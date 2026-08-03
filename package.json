@@ -7,7 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "start": "node src/index.js",
+    "start": "NODE_OPTIONS='--max-old-space-size=300' node src/index.js",
     "scrape": "node src/runOnce.js",
     "dry-run": "DRY_RUN=true node src/runOnce.js",
     "fb:auth": "node scripts/fbAuth.js",
