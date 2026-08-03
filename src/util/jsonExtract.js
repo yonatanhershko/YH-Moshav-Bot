@@ -70,8 +70,9 @@ export function normalizeListing(raw, { source, buildItemUrl }) {
   const title =
     pick(raw, ["title", "row1", "AdTitle", "addressTitle", "description", "text", "line1", "city_text", "street_text"]) ??
     `מודעת ${source}`;
-  const location =
+  const rawLoc =
     pick(raw, ["address", "city", "neighborhood", "row2", "area", "streetName", "street_text", "city_text", "line2"]) ?? "";
+  const location = typeof rawLoc === "object" ? (rawLoc.text || rawLoc.name || rawLoc.city || "") : String(rawLoc);
   let url = pick(raw, ["url", "link", "canonicalUrl"]);
   if (!url) url = buildItemUrl(String(externalId));
 
@@ -79,7 +80,7 @@ export function normalizeListing(raw, { source, buildItemUrl }) {
     source,
     externalId: String(externalId),
     id: makeId(source, String(externalId)),
-    title: String(title).trim().slice(0, 300),
+    title: String(typeof title === "object" ? title.text || title.name || "" : title).trim().slice(0, 300),
     price,
     rooms,
     location: String(location).trim(),
