@@ -1,3 +1,5 @@
+import { config } from "../config/filters.js";
+
 const DRY_RUN = process.env.DRY_RUN === "true";
 
 function escapeHtml(s = "") {
@@ -9,15 +11,17 @@ function escapeHtml(s = "") {
 
 function formatMessage(listing) {
   const lines = [];
-  const sourceLabel = listing.source === "facebook" ? "📘 פייסבוק" : "🏠 Yad2";
-  lines.push(`<b>${sourceLabel}</b>`);
-  if (listing.title) lines.push(escapeHtml(listing.title));
-  const meta = [];
-  if (listing.price != null) meta.push(`💰 ${listing.price.toLocaleString()} ₪`);
-  if (listing.rooms != null) meta.push(`🛏️ ${listing.rooms} חד׳`);
-  if (listing.location) meta.push(`📍 ${escapeHtml(listing.location)}`);
-  if (meta.length) lines.push(meta.join("  •  "));
-  if (listing.url) lines.push(`\n${listing.url}`);
+  const dealTypeBadge = config.filters.dealType === "sale" ? "🏷️ <b>למכירה</b>" : "🏷️ <b>להשכרה</b>";
+  const sourceLabel = listing.source === "facebook" ? "📘 פייסבוק" : listing.source === "yad2" ? "🏠 Yad2" : "🏢 מדלן";
+  
+  lines.push(`${dealTypeBadge}  •  ${sourceLabel}`);
+  if (listing.title) lines.push(`🏠 <b>${escapeHtml(listing.title)}</b>`);
+  
+  if (listing.price != null) lines.push(`💰 <b>מחיר:</b> ${listing.price.toLocaleString()} ₪`);
+  if (listing.rooms != null) lines.push(`🛏️ <b>חדרים:</b> ${listing.rooms}`);
+  if (listing.location) lines.push(`📍 <b>מיקום:</b> ${escapeHtml(listing.location)}`);
+  if (listing.url) lines.push(`\n🔗 <a href="${listing.url}">לצפייה במודעה המקורית לחץ כאן</a>`);
+  
   return lines.join("\n");
 }
 

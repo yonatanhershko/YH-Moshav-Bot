@@ -32,9 +32,10 @@ async function scrapeOne(context, { source, url }) {
 
   try {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
-    await page.waitForTimeout(2500 + Math.random() * 2500);
-    await page.mouse.wheel(0, 2000);
-    await page.waitForTimeout(2000);
+    // המתנה של 5 שניות למעבר מסך האימות (Imperva / Verification)
+    await page.waitForTimeout(5000);
+    await page.mouse.wheel(0, 2500);
+    await page.waitForTimeout(2500);
 
     const raws = [];
 
@@ -50,6 +51,37 @@ async function scrapeOne(context, { source, url }) {
     }
 
     for (const body of jsonResponses) raws.push(...collectListings(body));
+
+    // נפילת סמך: אם לא נמצאו מודעות דרך JSON, חלץ ישירות מאלמנטי ה-DOM
+    if (!raws.length) {
+      const domItems = await page
+        .$$eval('a[href*="/item/"], a[href*="/listings/"], [data-testid^="feed-item"]', (els) =>
+          els.map((e) => {
+            const href = e.href || e.querySelector("a")?.href || "";
+            const text = e.innerText || "";
+            return { href, text };
+          })
+        )
+        .catch(() => []);
+
+      for (const d of domItems) {
+        if (!d.href) continue;
+        const match = d.href.match(/\/(?:item|listings)\/([a-zA-Z0-9]+)/);
+        const externalId = match ? match[1] : null;
+        if (!externalId) continue;
+
+        const lines = d.text.split("\n").map((l) => l.trim()).filter(Boolean);
+        raws.push({
+          id: externalId,
+          orderId: externalId,
+          url: d.href,
+          title: lines[0] || `מודעה מ-${source}`,
+          price: d.text,
+          rooms: d.text,
+          location: lines[1] || "",
+        });
+      }
+    }
 
     if (DRY_RUN && !raws.length) {
       await page.screenshot({ path: `${source}-debug-${Date.now()}.png` }).catch(() => {});
@@ -86,13 +118,29 @@ export async function scrapeJsonSites() {
 
   const browser = await chromium.launch({
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-blink-features=AutomationControlled",
+    ],
   });
   const context = await browser.newContext({
     userAgent:
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     locale: "he-IL",
-    viewport: { width: 1366, height: 900 },
+    viewport: { width: 1440, height: 900 },
+    extraHTTPHeaders: {
+      "Accept-Language": "he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7",
+      "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": '"macOS"',
+    },
+  });
+
+  // הסוואת הדפדפן מפני מנגנוני הגנה (Imperva/Cloudflare)
+  await context.addInitScript(() => {
+    Object.defineProperty(navigator, "webdriver", { get: () => undefined });
   });
 
   const results = [];

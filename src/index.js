@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cron from "node-cron";
 import { runPipeline } from "./pipeline.js";
+import { startTelegramListener } from "./telegramBot.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -38,6 +39,9 @@ app.get("/run", async (_req, res) => {
 
 app.listen(PORT, () => {
   console.log(`[server] listening on ${PORT}`);
+
+  // הפעלת האזנה לפקודות מהטלגרם בזמן אמת
+  startTelegramListener();
 
   const expr = process.env.CHECK_CRON || "*/30 * * * *";
   if (cron.validate(expr)) {

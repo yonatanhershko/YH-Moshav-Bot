@@ -17,6 +17,17 @@ export function passesFilters(listing) {
   const f = config.filters;
   const text = `${listing.title || ""} ${listing.body || ""} ${listing.location || ""}`.toLowerCase();
 
+  // סינון לפי סוג עסקה (להשכרה vs למכירה)
+  if (f.dealType === "rent") {
+    if ((text.includes("למכירה") || text.includes("למכירה:")) && !text.includes("להשכרה") && !text.includes("להשכיר") && !text.includes("שכירות")) {
+      return false;
+    }
+  } else if (f.dealType === "sale") {
+    if ((text.includes("להשכרה") || text.includes("להשכיר") || text.includes("שכירות")) && !text.includes("למכירה")) {
+      return false;
+    }
+  }
+
   if (f.minPrice != null && listing.price != null && listing.price < f.minPrice) return false;
   if (f.maxPrice != null && listing.price != null && listing.price > f.maxPrice) return false;
   if (f.minRooms != null && listing.rooms != null && listing.rooms < f.minRooms) return false;

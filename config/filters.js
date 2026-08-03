@@ -29,6 +29,7 @@ export const config = {
   // 4) filters
   // -----------------------------------------------------------
   filters: {
+    dealType: "rent", // 'rent' (להשכרה) | 'sale' (למכירה) | 'all' (הכל)
     minPrice: null,
     maxPrice: 4500,
     minRooms: 2,
@@ -45,3 +46,19 @@ export const config = {
     scrollRounds: 4,
   },
 };
+
+// פונקציות עזר לעדכון סינונים בזמן אמת מהטלגרם
+export function updateFilter(key, value) {
+  config.filters[key] = value;
+}
+
+export function getFilterSummary() {
+  const f = config.filters;
+  const dealTypeLabel = f.dealType === "rent" ? "להשכרה בלבד" : f.dealType === "sale" ? "למכירה בלבד" : "הכל";
+  return [
+    `🏷️ סוג עסקה: ${dealTypeLabel}`,
+    `💰 מחיר מקסימלי: ${f.maxPrice ? f.maxPrice + ' ₪' : 'ללא הגבלה'}`,
+    `🛏️ חדרים: ${f.minRooms || 0} - ${f.maxRooms || 'ללא הגבלה'}`,
+    `🚫 מילות חסימה: ${f.blockKeywords.join(", ") || 'ללא'}`,
+  ].join("\n");
+}
