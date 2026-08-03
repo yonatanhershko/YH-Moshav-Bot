@@ -17,6 +17,17 @@ export function passesFilters(listing) {
   const f = config.filters;
   const text = `${listing.title || ""} ${listing.body || ""} ${listing.location || ""}`.toLowerCase();
 
+  // סינון קטגוריות ניווט כלליות של יד2 (אופניים, מוצרי חשמל וכו')
+  const nonRealEstateKeywords = [
+    "אופניים", "אלקטרוניקה", "ריהוט", "אייפון", "סמסונג", "גלאקסי",
+    "קונסולות", "עגלות", "דונה", "פופים", "הדומים", "מזרנים", "ספות",
+    "שולחנות", "כורסאות", "שידות", "ארונות", "מזנונים", "מכשירים",
+    "סלון וסביבת אירוח", "חדר ילדים", "מובילים", "פריטים", "המומלצים שלנו"
+  ];
+  for (const bad of nonRealEstateKeywords) {
+    if (listing.title && listing.title.includes(bad)) return false;
+  }
+
   // סינון לפי סוג עסקה (להשכרה vs למכירה)
   if (f.dealType === "rent") {
     if ((text.includes("למכירה") || text.includes("למכירה:")) && !text.includes("להשכרה") && !text.includes("להשכיר") && !text.includes("שכירות")) {

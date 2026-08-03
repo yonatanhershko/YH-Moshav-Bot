@@ -8,21 +8,37 @@ const DRY_RUN = process.env.DRY_RUN === "true";
 
 async function buildContext(browser) {
   const b64 = process.env.FB_STORAGE_STATE_B64;
+  const options = {
+    locale: "he-IL",
+    userAgent:
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    viewport: { width: 1440, height: 900 },
+  };
+
   if (b64) {
-    const state = JSON.parse(Buffer.from(b64, "base64").toString("utf8"));
-    return browser.newContext({ storageState: state, locale: "he-IL" });
+    try {
+      options.storageState = JSON.parse(Buffer.from(b64, "base64").toString("utf8"));
+    } catch (e) {
+      console.error("[fb] error parsing FB_STORAGE_STATE_B64:", e.message);
+    }
+  } else if (fs.existsSync("fb-state.json")) {
+    options.storageState = "fb-state.json";
   }
-  if (fs.existsSync("fb-state.json")) {
-    return browser.newContext({ storageState: "fb-state.json", locale: "he-IL" });
+
+  const ctx = await browser.newContext(options);
+  await ctx.addInitScript(() => {
+    Object.defineProperty(navigator, "webdriver", { get: () => false });
+  });
+
+  if (!b64 && !fs.existsSync("fb-state.json")) {
+    const page = await ctx.newPage();
+    await page.goto("https://www.facebook.com/login", { waitUntil: "domcontentloaded" });
+    await page.fill("#email", process.env.FB_EMAIL || "");
+    await page.fill("#pass", process.env.FB_PASSWORD || "");
+    await page.click('button[name="login"]');
+    await page.waitForTimeout(6000);
+    await page.close();
   }
-  const ctx = await browser.newContext({ locale: "he-IL" });
-  const page = await ctx.newPage();
-  await page.goto("https://www.facebook.com/login", { waitUntil: "domcontentloaded" });
-  await page.fill("#email", process.env.FB_EMAIL || "");
-  await page.fill("#pass", process.env.FB_PASSWORD || "");
-  await page.click('button[name="login"]');
-  await page.waitForTimeout(6000);
-  await page.close();
   return ctx;
 }
 
@@ -45,7 +61,12 @@ export async function scrapeFacebook() {
   try {
     browser = await chromium.launch({
       headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-blink-features=AutomationControlled",
+      ],
     });
     context = await buildContext(browser);
 

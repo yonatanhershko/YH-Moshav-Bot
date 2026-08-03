@@ -50,8 +50,8 @@ export const config = {
   // 5) Facebook - posts per group
   // -----------------------------------------------------------
   facebook: {
-    postsPerGroup: 15,
-    scrollRounds: 4,
+    postsPerGroup: 10,
+    scrollRounds: 3,
   },
 };
 

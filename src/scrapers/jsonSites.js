@@ -32,11 +32,24 @@ async function scrapeOne(context, { source, url }) {
   });
 
   try {
+    // טעינת דף הבית קודם כדי לקבל עוגיית Imperva תקינה (Session Cookie Bypass)
+    if (source === "yad2") {
+      await page.goto("https://www.yad2.co.il", { waitUntil: "domcontentloaded", timeout: 30000 }).catch(() => {});
+      await page.waitForTimeout(3000);
+    }
+
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
-    // המתנה של 5 שניות למעבר מסך האימות (Imperva / Verification)
-    await page.waitForTimeout(5000);
+    
+    // המתנה פעילה עד שמסך האימות של Imperva מסיים ומפנה לדף הדירות האמיתי (עד 15 שניות)
+    await page
+      .waitForFunction(
+        () => !document.body?.innerText?.includes("Verifying your browser"),
+        { timeout: 15000 }
+      )
+      .catch(() => {});
+
     await page.mouse.wheel(0, 2500);
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(3000);
 
     const raws = [];
 
@@ -56,7 +69,7 @@ async function scrapeOne(context, { source, url }) {
     // נפילת סמך: אם לא נמצאו מודעות דרך JSON, חלץ ישירות מאלמנטי ה-DOM
     if (!raws.length) {
       const domItems = await page
-        .$$eval('a[href*="/item/"], a[href*="/listings/"], [data-testid^="feed-item"]', (els) =>
+        .$$eval('a[href*="/item/"], a[href*="/listings/"], a[href*="/for-rent/"], a[href*="/bulletin/"], [data-testid^="feed-item"], div[class*="feed_item"]', (els) =>
           els.map((e) => {
             const href = e.href || e.querySelector("a")?.href || "";
             const text = e.innerText || "";
@@ -67,7 +80,7 @@ async function scrapeOne(context, { source, url }) {
 
       for (const d of domItems) {
         if (!d.href) continue;
-        const match = d.href.match(/\/(?:item|listings)\/([a-zA-Z0-9]+)/);
+        const match = d.href.match(/\/(?:item|listings|for-rent|bulletin)\/([a-zA-Z0-9_-]+)/);
         const externalId = match ? match[1] : null;
         if (!externalId) continue;
 
@@ -103,6 +116,7 @@ async function scrapeOne(context, { source, url }) {
       if (seen.has(n.id)) continue;
       seen.add(n.id);
       out.push(n);
+      if (out.length >= 10) break; // הגבלה ל-10 מודעות לכל כתובת כדי שהסריקה תהיה מהירה ולא תעמיס
     }
     console.log(`[${source}] ${url.slice(0, 55)}... -> ${out.length} items`);
     return out;
@@ -146,11 +160,39 @@ export async function scrapeJsonSites() {
   // הסוואת הדפדפן מפני מנגנוני הגנה (Imperva/Cloudflare)
   await context.addInitScript(() => {
     Object.defineProperty(navigator, "webdriver", { get: () => undefined });
+    Object.defineProperty(navigator, "languages", { get: () => ["he-IL", "he", "en-US", "en"] });
+    Object.defineProperty(navigator, "plugins", { get: () => [1, 2, 3, 4, 5] });
+    window.chrome = {
+      runtime: {},
+      loadTimes: function () {},
+      csi: function () {},
+      app: {},
+    };
+    if (navigator.permissions && navigator.permissions.query) {
+      const orig = navigator.permissions.query;
+      navigator.permissions.query = (p) =>
+        p.name === "notifications"
+          ? Promise.resolve({ state: Notification.permission })
+          : orig(p);
+    }
   });
 
   const results = [];
   for (const site of sites) {
-    const items = await scrapeOne(context, site);
+    let items = await scrapeOne(context, site);
+    
+    // ניסיון חוזר במצב Mobile אם לא נמצאו תוצאות ב-Desktop
+    if (!items.length && site.source === "yad2") {
+      console.log(`[yad2] retrying ${site.url.slice(0, 45)} with mobile user agent...`);
+      const mobileContext = await browser.newContext({
+        userAgent:
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
+        viewport: { width: 390, height: 844 },
+      });
+      items = await scrapeOne(mobileContext, site);
+      await mobileContext.close().catch(() => {});
+    }
+
     results.push(...items);
   }
 

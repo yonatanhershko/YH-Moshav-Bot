@@ -7,6 +7,9 @@ import { startTelegramListener } from "./telegramBot.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// הגשת תמונות באגים לצפייה מרחוק במידת הצורך
+app.use("/debugs", express.static("debugs-images"));
+
 let lastRun = null;
 let running = false;
 

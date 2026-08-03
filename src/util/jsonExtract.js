@@ -2,21 +2,34 @@ import { makeId, parsePrice, parseRooms } from "./normalize.js";
 
 const DRY_RUN = () => process.env.DRY_RUN === "true";
 
-// מזהה אובייקט שנראה כמו מודעה (ללא תלות בשמות שדות מדויקים)
+const NON_REAL_ESTATE_TITLES = [
+  "אופניים", "אלקטרוניקה", "סלון", "ריהוט", "אייפון", "גלאקסי",
+  "קונסולות", "עגלות", "פריטים", "ספות", "שולחנות", "כורסאות",
+  "שידות", "ארונות", "מזנונים", "פופים", "הדומים", "מזרנים",
+  "מובילים", "דונה", "חדר ילדים", "כיסאות", "המומלצים שלנו"
+];
+
+// מזהה אובייקט שנראה כמו מודעת נדל"ן (ללא תלות בשמות שדות מדויקים)
 export function looksLikeListing(obj) {
   if (!obj || typeof obj !== "object" || Array.isArray(obj)) return false;
+
+  const titleVal = String(obj.title || obj.row1 || obj.name || "");
+  if (NON_REAL_ESTATE_TITLES.some((t) => titleVal.includes(t))) return false;
+
   const keys = Object.keys(obj).map((k) => k.toLowerCase());
-  if (keys.length < 2) return false;
-  const hasPrice = keys.some((k) => k.includes("price") || k.includes("cost") || k.includes("shekel") || k.includes("nis"));
+  if (keys.length < 3) return false;
+
+  const hasPrice = keys.some((k) => k.includes("price") || k.includes("cost") || k.includes("shekel"));
   const hasId = keys.some(
-    (k) => k === "id" || k.includes("token") || k.includes("orderid") || k.includes("adnumber") || k.includes("record") || k.includes("item_id") || k.includes("id_item")
+    (k) => k === "id" || k.includes("token") || k.includes("orderid") || k.includes("adnumber") || k.includes("record") || k.includes("itemid") || k.includes("item_id")
   );
   const hasLoc = keys.some((k) =>
-    ["address", "city", "neighborhood", "area", "title", "row1", "row2", "street", "settlement", "location", "line"].some((s) =>
+    ["address", "city", "neighborhood", "area", "row1", "row2", "street", "settlement", "location"].some((s) =>
       k.includes(s)
     )
   );
-  return (hasPrice && hasId) || (hasPrice && hasLoc) || (hasId && hasLoc && keys.length >= 4);
+
+  return (hasPrice && hasId && hasLoc) || (hasPrice && (keys.includes("rooms") || keys.includes("room") || keys.includes("square_meters")));
 }
 
 // סריקה רקורסיבית של כל מבנה JSON ואיסוף אובייקטים שנראים כמו מודעות
