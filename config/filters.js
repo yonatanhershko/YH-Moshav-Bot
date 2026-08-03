@@ -4,9 +4,14 @@ export const config = {
   // -----------------------------------------------------------
   // 1) Yad2 Search URLs
   // -----------------------------------------------------------
+  // -----------------------------------------------------------
+  // 1) Yad2 Search URLs (כתובות רחבות לאזור השרון, עמק חפר ומושבים)
+  // -----------------------------------------------------------
   yad2SearchUrls: [
-    "https://www.yad2.co.il/realestate/rent/center-and-sharon?minPrice=1000&maxPrice=4500&area=70&city=0698&neighborhood=991148&bBox=32.319772%2C34.955418%2C32.330583%2C34.967157&zoom=16",
-    "https://www.yad2.co.il/realestate/rent/center-and-sharon?property=5%2C39%2C32%2C55&area=9&city=0466&neighborhood=990418&bBox=32.088916%2C34.767192%2C32.211657%2C34.900209&zoom=12",
+    // דירות להשכרה בשרון ובמרכז (עד 4,500 ₪)
+    "https://www.yad2.co.il/realestate/rent/center-and-sharon?minPrice=1000&maxPrice=4500",
+    // דירות להשכרה באזור השרון (אזור 9)
+    "https://www.yad2.co.il/realestate/rent?area=9&minPrice=1000&maxPrice=4500",
   ],
 
   // -----------------------------------------------------------
@@ -17,12 +22,15 @@ export const config = {
   ],
 
   // -----------------------------------------------------------
-  // 3) Facebook Groups
+  // 3) Facebook Groups (קבוצות פייסבוק מובילות לדירות במושבים/עמק חפר/שרון)
   // -----------------------------------------------------------
   facebookGroupUrls: [
     "https://www.facebook.com/groups/960020180804645",
     "https://www.facebook.com/groups/512846588904138",
     "https://www.facebook.com/groups/dirotbemoshavimdarom",
+    "https://www.facebook.com/groups/1577747809187313",
+    "https://www.facebook.com/groups/338276686307370",
+    "https://www.facebook.com/groups/1905601096374544/"
   ],
 
   // -----------------------------------------------------------

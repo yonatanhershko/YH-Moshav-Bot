@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { chromium } from "playwright";
 import { config } from "../../config/filters.js";
 import { collectListings, normalizeListing } from "../util/jsonExtract.js";
@@ -83,9 +84,13 @@ async function scrapeOne(context, { source, url }) {
       }
     }
 
-    if (DRY_RUN && !raws.length) {
-      await page.screenshot({ path: `${source}-debug-${Date.now()}.png` }).catch(() => {});
-      console.warn(`[${source}] no listings found — saved debug screenshot`);
+    if (!raws.length) {
+      if (!fs.existsSync("debugs-images")) {
+        fs.mkdirSync("debugs-images", { recursive: true });
+      }
+      const screenshotPath = `debugs-images/${source}-debug-${Date.now()}.png`;
+      await page.screenshot({ path: screenshotPath }).catch(() => {});
+      console.warn(`[${source}] no listings found — saved debug screenshot to ${screenshotPath}`);
     }
 
     const normalized = raws.map((r) =>
