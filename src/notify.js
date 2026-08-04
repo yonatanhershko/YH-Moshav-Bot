@@ -40,19 +40,23 @@ export async function sendAlert(listing) {
     return;
   }
 
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: msg,
-      parse_mode: "HTML",
-      disable_web_page_preview: false,
-    }),
-  });
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: msg,
+        parse_mode: "HTML",
+        disable_web_page_preview: false,
+      }),
+    });
 
-  if (!res.ok) {
-    const body = await res.text();
-    console.error("[notify] Telegram error:", res.status, body);
+    if (!res.ok) {
+      const body = await res.text();
+      console.error("[notify] Telegram API error:", res.status, body);
+    }
+  } catch (e) {
+    console.error("[notify] Telegram fetch failed:", e.message, e.cause || "");
   }
 }

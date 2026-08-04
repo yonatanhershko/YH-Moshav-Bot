@@ -34,7 +34,7 @@ export async function getSeenIds() {
     );
     return new Set((data || []).map((r) => r.id));
   } catch (e) {
-    console.error("[db] getSeenIds error:", e.message);
+    console.error("[db] getSeenIds error:", e.message, e.cause || "");
     return new Set();
   }
 }

@@ -38,7 +38,7 @@ export async function runPipeline() {
       sent++;
       await new Promise((r) => setTimeout(r, 1200));
     } catch (e) {
-      console.error("[pipeline] send/save error:", e.message);
+      console.error("[pipeline] send/save error:", e.message, e.cause || "");
     }
   }
 

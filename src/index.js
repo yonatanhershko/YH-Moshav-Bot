@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 import "dotenv/config";
 import express from "express";
 import cron from "node-cron";
