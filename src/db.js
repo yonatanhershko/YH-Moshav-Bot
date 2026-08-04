@@ -6,6 +6,7 @@ let supabase = null;
 if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
   supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY, {
     auth: { persistSession: false },
+    realtime: { global: { headers: {} }, transport: undefined }
   });
 }
 
