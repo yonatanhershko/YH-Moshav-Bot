@@ -125,7 +125,7 @@ export async function scrapeJsonSites() {
     return [];
   }
 
-  const launchOptions = {
+  const browser = await chromium.launch({
     headless: true,
     args: [
       "--no-sandbox",
@@ -136,22 +136,7 @@ export async function scrapeJsonSites() {
       "--no-zygote",
       "--disable-blink-features=AutomationControlled",
     ],
-  };
-
-  if (process.env.PROXY_URL) {
-    try {
-      const u = new URL(process.env.PROXY_URL);
-      const server = `${u.protocol}//${u.hostname}${u.port ? ":" + u.port : ""}`;
-      launchOptions.proxy = { server };
-      if (u.username) launchOptions.proxy.username = decodeURIComponent(u.username);
-      if (u.password) launchOptions.proxy.password = decodeURIComponent(u.password);
-      console.log(`[json-sites] using proxy: ${server}`);
-    } catch {
-      launchOptions.proxy = { server: process.env.PROXY_URL };
-    }
-  }
-
-  const browser = await chromium.launch(launchOptions);
+  });
   const context = await browser.newContext({
     userAgent:
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",

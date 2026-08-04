@@ -59,7 +59,7 @@ export async function scrapeFacebook() {
   let browser, context;
   const results = [];
   try {
-    const launchOptions = {
+    browser = await chromium.launch({
       headless: true,
       args: [
         "--no-sandbox",
@@ -70,22 +70,7 @@ export async function scrapeFacebook() {
         "--no-zygote",
         "--disable-blink-features=AutomationControlled",
       ],
-    };
-
-    if (process.env.PROXY_URL) {
-      try {
-        const u = new URL(process.env.PROXY_URL);
-        const server = `${u.protocol}//${u.hostname}${u.port ? ":" + u.port : ""}`;
-        launchOptions.proxy = { server };
-        if (u.username) launchOptions.proxy.username = decodeURIComponent(u.username);
-        if (u.password) launchOptions.proxy.password = decodeURIComponent(u.password);
-        console.log(`[fb] using proxy: ${server}`);
-      } catch {
-        launchOptions.proxy = { server: process.env.PROXY_URL };
-      }
-    }
-
-    browser = await chromium.launch(launchOptions);
+    });
     context = await buildContext(browser);
 
     for (const groupUrl of groups) {

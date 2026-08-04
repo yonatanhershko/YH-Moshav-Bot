@@ -1,10 +1,7 @@
 name: Moshav Bot Scraper
 
 on:
-  schedule:
-    # מריץ את הסריקה אוטומטית כל 30 דקות
-    - cron: '*/30 * * * *'
-  workflow_dispatch: # מאפשר להריץ סריקה ידנית מ-GitHub בכל רגע
+  workflow_dispatch: # הרצה ידנית בלבד לפי דרישה
 
 jobs:
   scrape:
@@ -16,7 +13,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install dependencies

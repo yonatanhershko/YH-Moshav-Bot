@@ -4,7 +4,7 @@
   "description": "Apartment-hunting bot for moshavim/kibbutzim (Yad2 + Facebook) with Telegram alerts",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "start": "NODE_OPTIONS='--max-old-space-size=300' node src/index.js",

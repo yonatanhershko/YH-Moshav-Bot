@@ -46,12 +46,12 @@ app.listen(PORT, () => {
   // הפעלת האזנה לפקודות מהטלגרם בזמן אמת
   startTelegramListener();
 
-  const expr = process.env.CHECK_CRON || "*/30 * * * *";
-  if (cron.validate(expr)) {
+  const expr = process.env.CHECK_CRON;
+  if (expr && expr !== "none" && cron.validate(expr)) {
     cron.schedule(expr, () => safeRun("cron"));
     console.log(`[scheduler] cron set: ${expr}`);
   } else {
-    console.error(`[scheduler] invalid CHECK_CRON: ${expr}`);
+    console.log("[scheduler] automatic cron disabled (on-demand only)");
   }
 
   if (process.env.RUN_ON_BOOT === "true") {
