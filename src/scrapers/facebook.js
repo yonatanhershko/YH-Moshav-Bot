@@ -59,7 +59,7 @@ export async function scrapeFacebook() {
   let browser, context;
   const results = [];
   try {
-    browser = await chromium.launch({
+    const launchOptions = {
       headless: true,
       args: [
         "--no-sandbox",
@@ -70,7 +70,14 @@ export async function scrapeFacebook() {
         "--no-zygote",
         "--disable-blink-features=AutomationControlled",
       ],
-    });
+    };
+
+    if (process.env.PROXY_URL) {
+      launchOptions.proxy = { server: process.env.PROXY_URL };
+      console.log(`[fb] using proxy: ${process.env.PROXY_URL.split("@").pop()}`);
+    }
+
+    browser = await chromium.launch(launchOptions);
     context = await buildContext(browser);
 
     for (const groupUrl of groups) {
