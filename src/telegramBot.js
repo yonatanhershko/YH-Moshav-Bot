@@ -55,25 +55,41 @@ export async function handleIncomingMessage(msg) {
     return;
   }
 
-  // 2) הפעלת סריקה
+  // 2) הפעלת סריקה דרך GitHub Actions (כדי לעקוף חסימת IP בענן)
   if (lowerText === "/scrape" || lowerText === "/run" || text === "סרוק" || text === "להריץ") {
-    if (isScrapingRunning) {
-      await sendMessage(chatId, "⏳ **סריקה כבר רצה ברקע**, אנא המתן לסיומה...");
+    const ghToken = process.env.GITHUB_PAT;
+    const ghRepo = process.env.GITHUB_REPO; // פורמט: "username/repo"
+
+    if (!ghToken || !ghRepo) {
+      await sendMessage(chatId, "❌ חסרים הגדרות GITHUB_PAT ו-GITHUB_REPO בשרת.");
       return;
     }
-    isScrapingRunning = true;
-    await sendMessage(chatId, "🔍 <b>מתחיל לסרוק דירות עכשיו ב-Yad2, Madlan ופייסבוק...</b>\nהודעה תישלח בסיום.");
-    
+
     try {
-      const res = await runPipeline();
-      await sendMessage(
-        chatId,
-        `✅ <b>הסריקה הושלמה בהצלחה!</b>\n📊 נסרקו <b>${res.scraped}</b> מודעות, ונשלחו <b>${res.sent}</b> התראות חדשות.`
+      const res = await fetch(
+        `https://api.github.com/repos/${ghRepo}/actions/workflows/scraper.yml/dispatches`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `token ${ghToken}`,
+            Accept: "application/vnd.github.v3+json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ref: "main" }),
+        }
       );
+
+      if (res.status === 204) {
+        await sendMessage(
+          chatId,
+          "🚀 <b>הסריקה הופעלה בהצלחה!</b>\nהבוט סורק עכשיו דירות ב-Yad2, Madlan ופייסבוק.\n⏳ התוצאות יגיעו אלייך לכאן תוך כ-2 דקות."
+        );
+      } else {
+        const body = await res.text();
+        await sendMessage(chatId, `❌ שגיאה בהפעלת הסריקה: ${res.status} ${body}`);
+      }
     } catch (e) {
-      await sendMessage(chatId, `❌ **שגיאה במהלך הסריקה:** ${e.message}`);
-    } finally {
-      isScrapingRunning = false;
+      await sendMessage(chatId, `❌ שגיאה: ${e.message}`);
     }
     return;
   }
