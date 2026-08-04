@@ -73,8 +73,16 @@ export async function scrapeFacebook() {
     };
 
     if (process.env.PROXY_URL) {
-      launchOptions.proxy = { server: process.env.PROXY_URL };
-      console.log(`[fb] using proxy: ${process.env.PROXY_URL.split("@").pop()}`);
+      try {
+        const u = new URL(process.env.PROXY_URL);
+        const server = `${u.protocol}//${u.hostname}${u.port ? ":" + u.port : ""}`;
+        launchOptions.proxy = { server };
+        if (u.username) launchOptions.proxy.username = decodeURIComponent(u.username);
+        if (u.password) launchOptions.proxy.password = decodeURIComponent(u.password);
+        console.log(`[fb] using proxy: ${server}`);
+      } catch {
+        launchOptions.proxy = { server: process.env.PROXY_URL };
+      }
     }
 
     browser = await chromium.launch(launchOptions);

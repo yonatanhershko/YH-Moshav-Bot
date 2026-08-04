@@ -32,24 +32,14 @@ async function scrapeOne(context, { source, url }) {
   });
 
   try {
-    // טעינת דף הבית קודם כדי לקבל עוגיית Imperva תקינה (Session Cookie Bypass)
-    if (source === "yad2") {
-      await page.goto("https://www.yad2.co.il", { waitUntil: "domcontentloaded", timeout: 30000 }).catch(() => {});
-      await page.waitForTimeout(3000);
-    }
-
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
+    // ניסיון טעינה מהיר עם Timeout של 15 שניות בלבד
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 }).catch(async () => {
+      console.warn(`[${source}] first navigation timeout, retrying with fast fallback...`);
+      await page.goto(url, { waitUntil: "commit", timeout: 15000 });
+    });
     
-    // המתנה פעילה עד שמסך האימות של Imperva מסיים ומפנה לדף הדירות האמיתי (עד 15 שניות)
-    await page
-      .waitForFunction(
-        () => !document.body?.innerText?.includes("Verifying your browser"),
-        { timeout: 15000 }
-      )
-      .catch(() => {});
-
     await page.mouse.wheel(0, 2500);
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
 
     const raws = [];
 
@@ -149,8 +139,16 @@ export async function scrapeJsonSites() {
   };
 
   if (process.env.PROXY_URL) {
-    launchOptions.proxy = { server: process.env.PROXY_URL };
-    console.log(`[json-sites] using proxy: ${process.env.PROXY_URL.split("@").pop()}`);
+    try {
+      const u = new URL(process.env.PROXY_URL);
+      const server = `${u.protocol}//${u.hostname}${u.port ? ":" + u.port : ""}`;
+      launchOptions.proxy = { server };
+      if (u.username) launchOptions.proxy.username = decodeURIComponent(u.username);
+      if (u.password) launchOptions.proxy.password = decodeURIComponent(u.password);
+      console.log(`[json-sites] using proxy: ${server}`);
+    } catch {
+      launchOptions.proxy = { server: process.env.PROXY_URL };
+    }
   }
 
   const browser = await chromium.launch(launchOptions);
