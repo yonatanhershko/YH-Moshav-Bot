@@ -32,12 +32,26 @@ async function scrapeOne(context, { source, url }) {
   });
 
   try {
-    // ניסיון טעינה מהיר עם Timeout של 15 שניות בלבד
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 }).catch(async () => {
+    // טעינת דף הבית קודם כדי לקבל עוגיית Imperva תקינה (Session Cookie Bypass)
+    if (source === "yad2") {
+      await page.goto("https://www.yad2.co.il", { waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
+      await page.waitForTimeout(3000);
+    }
+
+    // ניסיון טעינה מהיר
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 }).catch(async () => {
       console.warn(`[${source}] first navigation timeout, retrying with fast fallback...`);
       await page.goto(url, { waitUntil: "commit", timeout: 15000 });
     });
-    
+
+    // המתנה עד שמסך האימות של Imperva נעלם
+    await page
+      .waitForFunction(
+        () => !document.body?.innerText?.includes("Verifying your browser"),
+        { timeout: 10000 }
+      )
+      .catch(() => {});
+
     await page.mouse.wheel(0, 2500);
     await page.waitForTimeout(2000);
 
@@ -150,7 +164,6 @@ export async function scrapeJsonSites() {
     },
   });
 
-  // הסוואת הדפדפן מפני מנגנוני הגנה (Imperva/Cloudflare)
   await context.addInitScript(() => {
     Object.defineProperty(navigator, "webdriver", { get: () => undefined });
     Object.defineProperty(navigator, "languages", { get: () => ["he-IL", "he", "en-US", "en"] });
